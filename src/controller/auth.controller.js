@@ -34,15 +34,15 @@ auth.signUp = async (req, res) => {
     }
 
     // hash the user password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const hashedPassword  = aw
     // Generate Activation Tokem
-    const activationToken = generateActivationToken();
+    const activationToken = await generateActivationToken();
 
     // Create a User Without Saving to the database
     const newUser = await userModel.create({
       name,
       email,
-      password: hashedPassword,
+      password: await bcrypt.hash(password, 10),
       activationToken,
     });
 
@@ -69,22 +69,19 @@ auth.signUp = async (req, res) => {
     transporter.sendMail(mailOptions, (error, success) => {
       if (error) {
         console.log(`Error sending Activation Email`, error);
-      } else {
-        console.log(`activation email sent`, success.response);
       }
+      return res
+        .status(200)
+        .json(
+          new ResponseMessage(
+            "success",
+            200,
+            "Activation link sent to your email",
+          ),
+        );
     });
 
     console.log(newUser);
-
-    return res
-      .status(200)
-      .json(
-        new ResponseMessage(
-          "success",
-          200,
-          "Activation link sent to your email",
-        ),
-      );
   } catch (err) {
     console.log(err);
     return res

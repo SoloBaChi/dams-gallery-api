@@ -31,7 +31,7 @@ app.get("/activate/:activation_token", activateUser);
 
 // //////////////////
 //Other Routes
-app.use("/api/v1", userRouter);
+// app.use("/api/v1", userRouter);
 
 ////////////////////////////////////
 //NOT FOUND ROUTE
