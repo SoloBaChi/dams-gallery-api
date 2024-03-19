@@ -4,7 +4,9 @@ const express = require("express"),
   dotenv = require("dotenv").config({}),
   { json, urlencoded } = require("body-parser"),
   userRouter = require("./routes/user.route"),
-  { signUp, activateUser } = require("./controller/auth.controller");
+  { signUp, activateUser, login } = require("./controller/auth.controller"),
+  { body } = require("express-validator"),
+  protect = require("./middlewares/auth.middleware");
 
 const app = express();
 
@@ -25,13 +27,52 @@ app.get("/", (req, res) => {
 });
 
 ///////////////////////
+///Regkister account
+app.post(
+  "/register",
+  body("name")
+    .isString()
+    .isLength({
+      min: 3,
+      max: 100,
+    })
+    .withMessage("Name must be at least 3 characters"),
+  body("email").isEmail().withMessage("please enter a valid email address"),
+  body("password")
+    .isStrongPassword({
+      minLength: 8,
+      minUppercase: 1,
+      minSymbols: 1,
+      minLowercase: 1,
+    })
+    .withMessage(
+      `Password must be 8 characters and should include numbers,symbols and uppercase`,
+    ),
+  signUp,
+);
+app.post(
+  "/login",
+  body("email").isEmail().withMessage("Please enter a valid email address"),
+  body("password")
+    .isStrongPassword({
+      minLength: 8,
+      minUppercase: 1,
+      minSymbols: 1,
+      minLowercase: 1,
+    })
+    .withMessage(
+      `Password must be 8 characters and should include numbers,symbols and uppercase`,
+    ),
+  login,
+);
+
 //Activate user account
-app.post("/register", signUp);
 app.get("/activate/:activation_token", activateUser);
 
 // //////////////////
-//Other Routes
-// app.use("/api/v1", userRouter);
+//Authenticated Routes
+app.use("/api/v1", protect);
+app.use("/api/v1/user", userRouter);
 
 ////////////////////////////////////
 //NOT FOUND ROUTE
