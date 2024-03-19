@@ -62,8 +62,17 @@ auth.signUp = async (req, res) => {
       to: email,
       subject: "Activate Your Account",
       html: `
-         <h2>welcome ${name}</h2>
-        <p>Click <a href="${activationLink}">here</a> to activate your account</p>
+      <body style="padding:0.8rem">
+      <p style="font-size:1.2rem;line-height:1.5">
+      Hi, you have created a new customer account at <br>
+      <a style="text-decoration:none;font-size:1.4rem;font-weight:600;color:#ef5533" href="https://www.damsgallery.com/">DAMSGALLERY</a>
+      <br>
+      all you have to do is to activate it
+      </p>
+      <button 
+      style="border:none;box-shadow:none;font-size:1.1rem;display:block;width:100%;border-radius:8px;background:#ef5533;cursor:pointer;padding:0">
+      <a style="text-decoration:none;color:#fff;border:1px solid red;display:block;padding:0.75rem;border-radius:inherit;" href="${activationLink}">Activate your account</a></button>
+      </body>
         `,
     };
     transporter.sendMail(mailOptions, (error, success) => {
@@ -117,7 +126,42 @@ auth.activateUser = async (req, res) => {
     // Generate Access token
     const accessToken = await newToken(user);
 
-    res.redirect(redirectLink);
+    // send email for account comfirmation
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: user.email,
+      subject: "Customer Account Confirmation",
+      html: `
+      <body style="padding:0.8rem">
+      <h1 style="font-family:sans-serif;font-weight:600;font-size:1.8rem">Welcome to DamsGallery!</h1>
+     <p style="font-size:1.2rem;line-height:1.5">
+      You have activated your customer account <br>
+      </p>
+      <button 
+      style="border:none;box-shadow:none;font-size:1.1rem;display:block;width:100%;border-radius:8px;background:#ef5533;cursor:pointer;padding:0">
+      <a style="text-decoration:none;color:#fff;border:1px solid red;display:block;padding:0.75rem;border-radius:inherit;" href="https://www.damsgallery.com/">Visit our website</a></button>
+      </body>
+      `,
+    };
+    transporter.sendMail(mailOptions, (error, success) => {
+      if (error) {
+        console.log(`Error sending comfirmation Email`, error);
+      }
+
+      return res
+        .status(200)
+        .json(new ResponseMessage("success", 200, "Confirmation email sent"));
+    });
+
+    return res.redirect(redirectLink);
 
     // return res.status(200).json(
     //   new ResponseMessage("success", 200, "user activated successfully", {
@@ -147,6 +191,19 @@ auth.login = async (req, res) => {
       return res
         .status(400)
         .json(new ResponseMessage("error", 400, "Invalid Email!"));
+    }
+
+    // check if the user has been activated
+    if (!user.isActive) {
+      return res
+        .status(400)
+        .json(
+          new ResponseMessage(
+            "error",
+            400,
+            "Verification failed!\n use the link sent to your email and activate your account",
+          ),
+        );
     }
     //Check the if the password is correct
     const isCorrectPassword = bcrypt.compare(password, user.password);
