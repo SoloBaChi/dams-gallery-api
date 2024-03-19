@@ -56,7 +56,6 @@ auth.signUp = async (req, res) => {
     });
 
     const activationLink = `https://dams-gallery-api.vercel.app/activate/${activationToken}`;
-    const redirectLink = `https://www.damsgallery.com/activated-account`;
 
     const mailOptions = {
       from: process.env.EMAIL_FROM,
@@ -72,16 +71,15 @@ auth.signUp = async (req, res) => {
         console.log(`Error sending Activation Email`, error);
       }
 
-      res.redirect(redirectLink);
-      // return res
-      //   .status(200)
-      //   .json(
-      //     new ResponseMessage(
-      //       "success",
-      //       200,
-      //       "Activation link sent to your email",
-      //     ),
-      //   );
+      return res
+        .status(200)
+        .json(
+          new ResponseMessage(
+            "success",
+            200,
+            "Activation link sent to your email",
+          ),
+        );
     });
 
     console.log(newUser);
@@ -113,14 +111,19 @@ auth.activateUser = async (req, res) => {
     await user.save();
     console.log("saved");
 
+    // get the redirect link
+    const redirectLink = `https://www.damsgallery.com/activated-account`;
+
     // Generate Access token
     const accessToken = await newToken(user);
 
-    return res.status(200).json(
-      new ResponseMessage("success", 200, "user activated successfully", {
-        accessToken,
-      }),
-    );
+    res.redirect(redirectLink);
+
+    // return res.status(200).json(
+    //   new ResponseMessage("success", 200, "user activated successfully", {
+    //     accessToken,
+    //   }),
+    // );
   } catch (err) {
     return res
       .status(500)
