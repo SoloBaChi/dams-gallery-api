@@ -3,7 +3,7 @@ const validationResult = require("express-validator").validationResult,
   nodemailer = require("nodemailer"),
   jwt = require("jsonwebtoken");
 
-const sendActivationToken = require("../services/sendActivationEmail");
+// const sendActivationToken = require("../services/sendActivationEmail");
 const generateActivationToken = require("../utils/generateActivationToken");
 //   local modules
 const ResponseMessage = require("../utils/responseMessage"),
@@ -42,12 +42,38 @@ auth.signUp = async (req, res) => {
     const newUser = await userModel.create({
       name,
       email,
-      password:await bcrypt.hash(password, 10),
+      password: await bcrypt.hash(password, 10),
       activationToken,
     });
 
-    // send the Activation email
-    sendActivationToken(email, newUser.name, activationToken);
+    // send the Activation link to the email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const activationLink = `https://www.damsgallery.com/activate/${activationToken}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: "Activate Your Account",
+      html: `
+         <h2>welcome ${name}</h2>
+        <p>Click <a href="${activationLink}">here</a> to activate your account</p>
+        `,
+    };
+    transporter.sendMail(mailOptions, (error, success) => {
+      if (error) {
+        console.log(`Error sending Activation Email`, error);
+      } else {
+        console.log(`activation email sent`, success.response);
+      }
+    });
+
     console.log(newUser);
 
     return res
