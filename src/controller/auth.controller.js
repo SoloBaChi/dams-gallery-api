@@ -33,19 +33,21 @@ auth.signUp = async (req, res) => {
         .json(new ResponseMessage("error", 400, "email already exist"));
     }
 
+    // hash the user password
+    // const hashedPassword  = aw
     // Generate Activation Tokem
     const activationToken = generateActivationToken();
 
     // Create a User Without Saving to the database
-    const newUser = new userModel({
+    const newUser = await userModel.create({
       name,
       email,
-      password: bcrypt.hash(password, 10),
+      password:await bcrypt.hash(password, 10),
       activationToken,
     });
 
     // send the Activation email
-    sendActivationToken(email, activationToken);
+    sendActivationToken(email, newUser.name, activationToken);
     console.log(newUser);
 
     return res
@@ -70,23 +72,23 @@ auth.activateUser = async (req, res) => {
   const { activation_token } = req.params;
   console.log(activation_token);
   try {
-    const existingUser = await userModel.findOne({
+    const user = await userModel.findOne({
       activationToken: activation_token,
     });
-    if (!existingUser) {
+    if (!user) {
       console.log("user exist");
       return res
         .status(404)
         .json(new ResponseMessage("error", 404, "invalid activation token"));
     }
     // Activate the user and save to the DB
-    existingUser.isActive = true;
-    existingUser.activationToken = null; //reset the activation token to null
-    await existingUser.save();
+    user.isActive = true;
+    user.activationToken = null; //reset the activation token to null
+    await user.save();
     console.log("saved");
 
     // Generate Access token
-    const accessToken = newToken(existingUser);
+    const accessToken = newToken(user);
 
     return res.status(200).json(
       new ResponseMessage("success", 200, "user activated successfully", {

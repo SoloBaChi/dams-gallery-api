@@ -3,7 +3,8 @@ const express = require("express"),
   { connectToDb } = require("./services/db.connection"),
   dotenv = require("dotenv").config({}),
   { json, urlencoded } = require("body-parser"),
-  userRouter = require("./routes/user.route");
+  userRouter = require("./routes/user.route"),
+  { activateUser } = require("./controller/auth.controller");
 
 const app = express();
 
@@ -22,6 +23,10 @@ app.get("/", (req, res) => {
     status: "success",
   });
 });
+
+///////////////////////
+//Activate user account
+app.get("/activate/:activation_token", activateUser);
 
 // //////////////////
 //Other Routes
