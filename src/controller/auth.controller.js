@@ -34,7 +34,7 @@ auth.signUp = async (req, res) => {
     }
 
     // hash the user password
-    // const hashedPassword  = aw
+    const hashedPassword = await bcrypt.hash(password, 10);
     // Generate Activation Tokem
     const activationToken = generateActivationToken();
 
@@ -42,7 +42,7 @@ auth.signUp = async (req, res) => {
     const newUser = await userModel.create({
       name,
       email,
-      password: await bcrypt.hash(password, 10),
+      password: hashedPassword,
       activationToken,
     });
 
