@@ -36,7 +36,7 @@ auth.signUp = async (req, res) => {
     // hash the user password
     // const hashedPassword  = aw
     // Generate Activation Tokem
-    const activationToken = await generateActivationToken();
+    const activationToken = generateActivationToken();
 
     // Create a User Without Saving to the database
     const newUser = await userModel.create({
