@@ -8,14 +8,17 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendActivationToken = (userEmail, activationToken) => {
+const sendActivationToken = (userEmail, userName, activationToken) => {
   const activationLink = `https://www.damsgallery.com/activate/${activationToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: userEmail,
     subject: "Activate Your Account",
-    html: `<p>Click <a href="${activationLink}">here</a> to activate your account</p>`,
+    html: `
+     <h2>welcome ${userName}</h2>
+    <p>Click <a href="${activationLink}">here</a> to activate your account</p>
+    `,
   };
   transporter.sendMail(mailOptions, (error, success) => {
     if (error) {

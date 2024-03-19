@@ -27,8 +27,11 @@ const userSchema = new Schema(
   },
   {
     timestamps: true,
+    // include virtual properties in the JSON representation of the document.
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
 );
 
-const userModel = model("user-testing", userSchema);
+const userModel = model("user", userSchema);
 module.exports = userModel;
