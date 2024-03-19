@@ -55,7 +55,8 @@ auth.signUp = async (req, res) => {
       },
     });
 
-    const activationLink = `https://www.damsgallery.com/activate/${activationToken}`;
+    const activationLink = `https://dams-gallery-api.vercel.app/activate/${activationToken}`;
+    const redirectLink = `https://www.damsgallery.com/activated-account`;
 
     const mailOptions = {
       from: process.env.EMAIL_FROM,
@@ -70,15 +71,17 @@ auth.signUp = async (req, res) => {
       if (error) {
         console.log(`Error sending Activation Email`, error);
       }
-      return res
-        .status(200)
-        .json(
-          new ResponseMessage(
-            "success",
-            200,
-            "Activation link sent to your email",
-          ),
-        );
+
+      res.redirect(redirectLink);
+      // return res
+      //   .status(200)
+      //   .json(
+      //     new ResponseMessage(
+      //       "success",
+      //       200,
+      //       "Activation link sent to your email",
+      //     ),
+      //   );
     });
 
     console.log(newUser);
