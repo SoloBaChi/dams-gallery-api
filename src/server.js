@@ -4,7 +4,7 @@ const express = require("express"),
   dotenv = require("dotenv").config({}),
   { json, urlencoded } = require("body-parser"),
   userRouter = require("./routes/user.route"),
-  { activateUser } = require("./controller/auth.controller");
+  { signUp, activateUser } = require("./controller/auth.controller");
 
 const app = express();
 
@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
 
 ///////////////////////
 //Activate user account
+app.post("/register", signUp);
 app.get("/activate/:activation_token", activateUser);
 
 // //////////////////
