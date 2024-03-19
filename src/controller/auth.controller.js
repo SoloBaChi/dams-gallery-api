@@ -1,7 +1,7 @@
 const validationResult = require("express-validator").validationResult,
   bcrypt = require("bcryptjs"),
-  nodemailer = require("nodemailer"),
-  jwt = require("jsonwebtoken");
+  jwt = require("jsonwebtoken"),
+  nodemailer = require("nodemailer");
 
 // const sendActivationToken = require("../services/sendActivationEmail");
 const generateActivationToken = require("../utils/generateActivationToken");
@@ -36,7 +36,7 @@ auth.signUp = async (req, res) => {
     // hash the user password
     // const hashedPassword  = aw
     // Generate Activation Tokem
-    const activationToken = generateActivationToken();
+    const activationToken = await generateActivationToken();
 
     // Create a User Without Saving to the database
     const newUser = await userModel.create({
@@ -114,7 +114,7 @@ auth.activateUser = async (req, res) => {
     console.log("saved");
 
     // Generate Access token
-    const accessToken = newToken(user);
+    const accessToken = await newToken(user);
 
     return res.status(200).json(
       new ResponseMessage("success", 200, "user activated successfully", {
@@ -154,7 +154,7 @@ auth.login = async (req, res) => {
     }
 
     // Genearate token
-    const accessToken = newToken(user);
+    const accessToken = await newToken(user);
 
     return res.status(200).json(
       new ResponseMessage("success", 200, "Login Successfully", {
