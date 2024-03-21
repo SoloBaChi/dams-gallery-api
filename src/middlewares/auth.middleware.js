@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const ResponseMessage = require("../utils/responseMessage");
 const userModel = require("../models/user.model");
 
+// verify jwt Token
+// const expiresIn = 2
 const verifyToken = (token) =>
   jwt.verify(token, process.env.AUTHENTICATION_SECRET_KEY);
 

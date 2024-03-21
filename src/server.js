@@ -71,8 +71,8 @@ app.get("/activate/:activation_token", activateUser);
 
 // //////////////////
 //Authenticated Routes
-app.use("/api/v1", protect);
-app.use("/api/v1/user", userRouter);
+// app.use("/api/v1", protect);
+app.use("/api/v1/", userRouter);
 
 ////////////////////////////////////
 //NOT FOUND ROUTE
