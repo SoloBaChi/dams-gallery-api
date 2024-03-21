@@ -5,6 +5,8 @@ const validationResult = require("express-validator").validationResult,
 
 // const sendActivationToken = require("../services/sendActivationEmail");
 const generateActivationToken = require("../utils/generateActivationToken");
+const generateRandomDigit = require("../utils/generateRandomDigit");
+// const genrate
 //   local modules
 const ResponseMessage = require("../utils/responseMessage"),
   userModel = require("../models/user.model");
@@ -13,6 +15,10 @@ const auth = {};
 
 const newToken = (user) =>
   jwt.sign({ id: user._id }, process.env.AUTHENTICATION_SECRET_KEY);
+
+// Verify Jwt Token
+const verifyToken = (token) =>
+  jwt.verify(token, process.env.AUTHENTICATION_SECRET_KEY);
 
 // Register a user
 auth.signUp = async (req, res) => {
@@ -46,7 +52,10 @@ auth.signUp = async (req, res) => {
       activationToken,
     });
 
-    // send the Activation link to the email
+    // Create an activation link
+    const activationLink = `https://dams-gallery-api.vercel.app/activate/${activationToken}`;
+
+    // Send the Activation link to the email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -54,8 +63,6 @@ auth.signUp = async (req, res) => {
         pass: process.env.EMAIL_PASSWORD,
       },
     });
-
-    const activationLink = `https://dams-gallery-api.vercel.app/activate/${activationToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_FROM,
@@ -100,7 +107,7 @@ auth.signUp = async (req, res) => {
   }
 };
 
-// activate user account
+// Activate user account
 auth.activateUser = async (req, res) => {
   const { activation_token } = req.params;
   console.log(activation_token);
@@ -225,6 +232,176 @@ auth.login = async (req, res) => {
     return res
       .status(500)
       .json(new ResponseMessage("error", 500, "Internal Sever Error"));
+  }
+};
+
+// ////////////
+///FORGOT PASSWORD
+auth.sendResetPassowrdToken = async (req, res) => {
+  // const {email} = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res
+      .status(400)
+      .json(new ResponseMessage("error", 400, errors.array()));
+  }
+  try {
+    // Get the user email
+    const { email } = req.body;
+
+    // Check if the user exist
+    const user = await userModel.findOne({ email: email });
+    if (!user) {
+      return res
+        .status(400)
+        .json(
+          new ResponseMessage(
+            "error",
+            400,
+            "No account associated with this email",
+          ),
+        );
+    }
+
+    // Generate random Digit and update the user authToken
+    const authCode = generateRandomDigit();
+    console.log(authCode);
+    const updatedUser = await userModel.findByIdAndUpdate(
+      {
+        _id: user._id,
+      },
+      { authCode: await bcrypt.hash(authCode, 10) },
+      { new: true },
+    );
+
+    //Generate an access Token
+    const authToken = await newToken(updatedUser);
+    console.log(updatedUser);
+
+    //Send the Generated token to the user email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: user.email,
+      subject: "Customer Reset Password Token",
+      html: `
+      <body style="padding:0.8rem">
+      <h1 style="font-family:sans-serif;font-weight:600;font-size:1.8rem">You Requested for forgot Password</h1>
+     <p style="font-size:1.2rem;line-height:1.5">
+      Use the token below to reset your password <br>
+      </p>
+      <button 
+      style="border:none;box-shadow:none;display:block;width:100%;border-radius:8px;background:#ef5533;cursor:pointer;padding:0">
+      <a style="text-decoration:none;color:#fff;border:1px solid red;display:block;padding:0.75rem;border-radius:inherit;font-weight:700;font-family:sans-serif;font-size:2rem;letter-spacing:5px">${authCode}</a></button>
+      </body>
+      `,
+    };
+    transporter.sendMail(mailOptions, (error, success) => {
+      if (error) {
+        console.log(`Error sending comfirmation Email`, error);
+      }
+
+      return res.status(200).json(
+        new ResponseMessage("success", 200, "OTP sent to your email", {
+          authToken,
+        }),
+      );
+    });
+  } catch (err) {
+    return res
+      .status(500)
+      .json(new ResponseMessage("error", 500, "Internal server error"));
+  }
+};
+
+// verify Reset password Token
+auth.verifyResetPasswordToken = async (req, res) => {
+  // Get the password to be updated
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res
+      .status(400)
+      .json(new ResponseMessage("error", 400, errors.array()));
+  }
+  try {
+    const { authToken, otp, password } = req.body;
+
+    // Decode the auth token using jwt and check for validity
+    let decodedToken;
+    try {
+      decodedToken = await verifyToken(authToken);
+    } catch (err) {
+      return res
+        .status(401)
+        .json(new ResponseMessage("error", 401, "unverified token"));
+    }
+    if (!decodedToken) {
+      return res
+        .status(400)
+        .json(new ResponseMessage("error", 400, "invalid token"));
+    }
+
+    // Get the user id using the decoded token
+    const userId = decodedToken.id;
+    if (!userId) {
+      return res
+        .status(400)
+        .json(
+          new ResponseMessage(
+            "error",
+            400,
+            `user with ${userId} does not exist`,
+          ),
+        );
+    }
+
+    // Find the user using the user id
+    const user = await userModel.findOne({ _id: userId });
+    console.log(user);
+
+    // Check if the OTP is null i.e (has been used)
+    if (!user.authCode) {
+      return res
+        .status(400)
+        .json(new ResponseMessage("error", 400, "OTP has been used"));
+    }
+
+    // Compare the hashed token
+    isCorrectOtp = await bcrypt.compare(otp, user.authCode);
+    if (!isCorrectOtp) {
+      return res
+        .status(400)
+        .json(new ResponseMessage("error", 400, "invalid OTP !"));
+    }
+    // update the user password
+    const updatedUser = await userModel.findByIdAndUpdate(
+      { _id: userId },
+      { password: await bcrypt.hash(password, 10) },
+      { new: true },
+    );
+
+    // Reset the authCode to null and Save it
+    user.authCode = null;
+    await user.save();
+
+    return res.status(200).json(
+      new ResponseMessage("error", 200, "password updated successfully", {
+        updatedUser,
+      }),
+    );
+  } catch (err) {
+    return res;
+    console
+      .log(err)
+      .status(400)
+      .json(new ResponseMessage("error", 400, "Internal Server Error"));
   }
 };
 

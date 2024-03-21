@@ -19,6 +19,9 @@ const userSchema = new Schema(
     activationToken: {
       type: String,
     },
+    authCode: {
+      type: String,
+    },
     isActive: {
       type: Boolean,
       default: false,
