@@ -36,7 +36,7 @@ auth.signUp = async (req, res) => {
     if (existingUser) {
       return res
         .status(400)
-        .json(new ResponseMessage("error", 400, "email already exist"));
+        .json(new ResponseMessage("error", 400, "Email already exist!"));
     }
 
     // hash the user password
@@ -78,7 +78,7 @@ auth.signUp = async (req, res) => {
       </p>
       <button 
       style="border:none;box-shadow:none;font-size:1.1rem;display:block;width:100%;border-radius:8px;background:#ef5533;cursor:pointer;padding:0">
-      <a style="text-decoration:none;color:#fff;border:1px solid red;display:block;padding:0.75rem;border-radius:inherit;" href="${activationLink}">Activate your account</a></button>
+      <a style="text-decoration:none;color:#fff;border:1px solid red;display:block;padding:0.75rem;border-radius:inherit;" href="${activationLink}">Verify your account</a></button>
       </body>
         `,
     };
@@ -128,7 +128,7 @@ auth.activateUser = async (req, res) => {
     console.log("saved");
 
     // get the redirect link
-    const redirectLink = `https://www.damsgallery.com/activated-account`;
+    // const redirectLink = `https://www.damsgallery.com/activated-account`;
 
     // Generate Access token
     const accessToken = await newToken(user);
@@ -163,12 +163,17 @@ auth.activateUser = async (req, res) => {
         console.log(`Error sending comfirmation Email`, error);
       }
 
-      return res
-        .status(200)
-        .json(new ResponseMessage("success", 200, "Confirmation email sent"));
+      // return res
+      //   .status(200)
+      //   .json(new ResponseMessage("success", 200, "Confirmation email sent"));
+      return res.status(200).json(
+        new ResponseMessage("success", 200, "user activated successfully", {
+          accessToken,
+        }),
+      );
     });
 
-    return res.redirect(redirectLink);
+    // return res.redirect(redirectLink);
 
     // return res.status(200).json(
     //   new ResponseMessage("success", 200, "user activated successfully", {
@@ -201,6 +206,7 @@ auth.login = async (req, res) => {
     }
 
     // check if the user has been activated
+    console.log(user.isActive);
     if (!user.isActive) {
       return res
         .status(400)
@@ -213,7 +219,7 @@ auth.login = async (req, res) => {
         );
     }
     //Check the if the password is correct
-    const isCorrectPassword = bcrypt.compare(password, user.password);
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
     if (!isCorrectPassword) {
       return res
         .status(400)
