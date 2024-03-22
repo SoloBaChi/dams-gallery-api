@@ -53,7 +53,7 @@ auth.signUp = async (req, res) => {
     });
 
     // Create an activation link
-    const activationLink = `https://dams-gallery-api.vercel.app/activate/${activationToken}`;
+    const activationLink = `https://www.damsgallery.com/activate/${activationToken}`;
 
     // Send the Activation link to the email
     const transporter = nodemailer.createTransport({
