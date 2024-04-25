@@ -4,9 +4,12 @@ const {
   verifyResetPasswordToken,
 } = require("../controller/auth.controller");
 const { body } = require("express-validator");
+const protect = require("../middlewares/auth.middleware");
+const me = require("../controller/user.controller");
 
 const router = require("express").Router();
 
+// router.get("/my-profile", protect, me);
 // router.post("/register", signUp);
 // router.post("/activate/:activation_token", activateUser);
 // router.post("/login", login);
