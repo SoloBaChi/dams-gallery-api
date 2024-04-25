@@ -15,7 +15,7 @@ products.createProduct = async (req, res) => {
   }
   try {
     //   check if a product with same image url exist
-    const { title, description, imgSrc,price } = req.body;
+    const { title, description, imgSrc, price } = req.body;
     const existingImageUrl = await productModel.findOne({ imgSrc: imgSrc });
     if (existingImageUrl) {
       return res
@@ -28,7 +28,7 @@ products.createProduct = async (req, res) => {
       title,
       description,
       imgSrc,
-      price
+      price,
     });
 
     // Send email for the product  added
@@ -74,7 +74,9 @@ products.createProduct = async (req, res) => {
         );
     });
   } catch (err) {
-    return res.status(404).json(new ResponseMessage("Internal Server Error !"));
+    return res
+      .status(404)
+      .json(new ResponseMessage("error", 404, "Internal Server Error !"));
   }
 };
 
