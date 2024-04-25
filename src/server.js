@@ -4,6 +4,7 @@ const express = require("express"),
   dotenv = require("dotenv").config({}),
   { json, urlencoded } = require("body-parser"),
   userRouter = require("./routes/user.route"),
+  productRouter = require("./routes/products.route"),
   { signUp, activateUser, login } = require("./controller/auth.controller"),
   { body } = require("express-validator"),
   protect = require("./middlewares/auth.middleware");
@@ -73,6 +74,7 @@ app.get("/activate/:activation_token", activateUser);
 //Authenticated Routes
 // app.use("/api/v1", protect);
 app.use("/api/v1/", userRouter);
+app.use("/api/v1/", productRouter);
 
 ////////////////////////////////////
 //NOT FOUND ROUTE
