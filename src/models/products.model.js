@@ -15,6 +15,10 @@ const productSchema = new Schema(
     imgSrc: {
       type: String,
     },
+    price: {
+      type: String,
+      required: true,
+    },
     // createdBy: {
     //   ref: "user",
     // },
